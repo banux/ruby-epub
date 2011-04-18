@@ -20,27 +20,28 @@ class Epub
          @base_path = tab_path[0] + '/'
       end
       opf_file = zipfile.get_input_stream(opf_path)
-      @opf = Nokogiri::XML opf_file  
+      @opf = Nokogiri::XML opf_file 
+      @opf.remove_namespaces! 
    end
 
    def get_metadata()
-    if @opf.at_css("dc|title")
-      @title = @opf.at_css("dc|title").content
+    if @opf.at_css("title")
+      @title = @opf.at_css("title").content
     end
-    if @opf.at_css("dc|language")
-      @language = @opf.at_css("dc|language").content
+    if @opf.at_css("language")
+      @language = @opf.at_css("language").content
     end
-    if @opf.at_css("dc|publisher")
-      @publisher = @opf.at_css("dc|publisher").content
+    if @opf.at_css("publisher")
+      @publisher = @opf.at_css("publisher").content
     end
-    if @opf.at_css("dc|date")
-      @date = @opf.at_css("dc|date").content
+    if @opf.at_css("date")
+      @date = @opf.at_css("date").content
     end
-    if @opf.at_css("dc|rights")
-      @rights = @opf.at_css("dc|rights").content
+    if @opf.at_css("rights")
+      @rights = @opf.at_css("rights").content
     end
-    if @opf.at_css("dc|creator")
-      @creator = @opf.at_css("dc|creator").content
+    if @opf.at_css("creator")
+      @creator = @opf.at_css("creator").content
     end
    end
  
