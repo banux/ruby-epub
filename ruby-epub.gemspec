@@ -7,4 +7,5 @@ Gem::Specification.new do |spec|
   spec.name = 'ruby-epub'
   spec.version = '0.2'
   spec.files = ['README', 'lib/ruby-epub.rb']
+  spec.add_dependency('rubyzip2')
 end  
