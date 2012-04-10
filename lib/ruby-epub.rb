@@ -2,13 +2,23 @@ require 'zip/zip'
 require 'nokogiri'
 
 class Epub
-   attr_accessor :title, :language, :publisher, :date, :rights, :creator
 
    def initialize(filename)
       @zip = Zip::ZipFile.open(filename)
       opf = get_opf(@zip)
       get_metadata()
    end
+
+  def my_metadata(name) 
+      # getter
+      define_singleton_method("#{name}=") do |val|
+        instance_variable_set("@#{name}", val)
+      end 
+      # setter
+      define_singleton_method("#{name}") do
+        instance_variable_get("@#{name}")
+      end 
+  end
 
    def get_opf(zipfile)
       container_file = zipfile.get_input_stream("META-INF/container.xml")
@@ -24,40 +34,48 @@ class Epub
       @opf.remove_namespaces! 
    end
 
-   def get_metadata()
-    if @opf.at_css("title")
-      @title = @opf.at_css("title").content
-    end
-    if @opf.at_css("language")
-      @language = @opf.at_css("language").content
-    end
-    if @opf.at_css("publisher")
-      @publisher = @opf.at_css("publisher").content
-    end
-    if @opf.at_css("date")
-      @date = @opf.at_css("date").content
-    end
-    if @opf.at_css("rights")
-      @rights = @opf.at_css("rights").content
-    end
-    if @opf.at_css("creator")
-      @creator = @opf.at_css("creator").content
+   def get_metadata()      
+    @opf.at_xpath("//metadata").children.each do |elem|
+      #puts elem.inspect
+      if elem.name != 'text'
+        if elem.name == "meta"
+          name_elem = elem['name'].tr(' ', '_')
+          content_elem = elem['content']
+        else
+          name_elem = elem.name
+          content_elem = elem.content
+        end
+        my_metadata name_elem
+        send(name_elem + '=', content_elem)
+      end
     end
    end
  
    def cover_image
-     content = cover_by_cover_id
-     return content if content
-     content = cover_by_meta_cover
-     return content if content
-     content = cover_image_by_html
-     return content if content 
+     content, img_name = cover_by_cover_id
+     if !content
+       content, img_name = cover_by_meta_cover
+     elsif !content
+       content, img_name = cover_image_by_html
+     end
+ 
+     if content
+       temp = Tempfile.new(['book_cover', File.extname(img_name)])
+       temp.binmode
+       temp.write(content)
+       temp.flush
+       if(temp.size > 0)
+         return File.new(temp.path)
+       else
+         return nil
+       end
+      end
    end
 
    def cover_image_by_html
-    cover_item = @opf.at_css("package guide reference[@type='cover']")
-    if cover_item
-      cover_url = cover_item['href']
+    cover_item = @opf.search("//package/guide/reference[@type='cover']")
+    if cover_item && cover_item.first
+      cover_url = cover_item.first['href']
       doc_cover = Nokogiri::HTML @zip.get_input_stream(@base_path + cover_url)
       tab_path = cover_url.split('/')
       html_path = ''
@@ -67,7 +85,7 @@ class Epub
       img_src = doc_cover.xpath('//img').first
       begin
       	@image_cover = @zip.get_input_stream(@base_path + html_path + img_src['src']) {|f| f.read}
-        return @image_cover
+        return [@image_cover, img_src['src']]
       rescue
         return nil
       end
@@ -75,13 +93,13 @@ class Epub
    end
 
    def cover_by_meta_cover
-    img_id = @opf.at_css("meta[@name='cover']")
-    if img_id
-    img_item = @opf.at_css("manifest item[id='"+ img_id['content'] + "']")
-    if img_item
-      img_url = @base_path + img_item['href']
+    img_id = @opf.search("//meta[@name='cover']")
+    if img_id && img_id.first
+    img_item = @opf.search("//manifest/item[@id='"+ img_id.first['content'] + "']")
+    if img_item && img_item.first
+      img_url = @base_path + img_item.first['href']
       @image_cover = @zip.get_input_stream(img_url) {|f| f.read}
-      return @image_cover
+      return [@image_cover, img_item.first['href']]
     else
      return nil
     end
@@ -89,12 +107,11 @@ class Epub
    end
 
    def cover_by_cover_id
-    img_item = @opf.at_css("manifest item #cover")
-    if img_item
-      img_url = img_item['href']
-      puts img_url
+    img_item = @opf.at_xpath("//manifest/item[@id='cover']")
+    if img_item 
+      img_url = @base_path + img_item['href']
       @image_cover = @zip.get_input_stream(img_url) {|f| f.read}
-      return @image_cover
+      return [@image_cover, img_item['href']]
     else
      return nil
     end
