@@ -39,7 +39,7 @@ class Epub
       #puts elem.inspect
       if elem.name != 'text'
         if elem.name == "meta"
-          name_elem = elem['name'].tr(' ', '_')
+          name_elem = elem['name'].tr(' ', '_').tr(':', '_')
           content_elem = elem['content']
         else
           name_elem = elem.name
