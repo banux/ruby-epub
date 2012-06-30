@@ -39,6 +39,10 @@ class OCF
 		return opf_path
     end
 
+    def save
+        puts get_opf_path
+    end
+
 end
 
 end

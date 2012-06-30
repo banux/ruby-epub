@@ -4,9 +4,9 @@ module Epub
 class OPF
 
 	def initialize(opf_path, zipfile, new_file)
-    @items = {}
-    @spine = {}
-    @metadata = {}
+    @items = []
+    @spine = []
+    @metadata = []
     @zip = zipfile
     if !new_file
       opf_file = @zip.get_input_stream(opf_path)
@@ -20,7 +20,6 @@ class OPF
         }
         end
         @zip.get_output_stream(opf_path) { |f| f.write new_opf.to_xml }
-        @zip.commit
         @opf = Nokogiri::parse new_opf.to_xml
       end
 
@@ -48,6 +47,17 @@ class OPF
         @metadata[name_elem] = content_elem
       end
     end
+   end
+
+   def add_html(filename)
+    @items.push filename
+    @spine.push filename
+   end
+
+   def save
+    puts @items
+    puts @spine
+    puts @metadata
    end
 
 
