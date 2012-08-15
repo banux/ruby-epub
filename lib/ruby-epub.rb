@@ -3,6 +3,8 @@ require 'nokogiri'
 
 class Epub
 
+  BANNED_META = ['office', 'amanuensis', 'calibre:user_metadata']
+
    def initialize(filename)
       @zip = Zip::ZipFile.open(filename)
       opf = get_opf(@zip)
@@ -12,7 +14,7 @@ class Epub
   def my_metadata(name) 
       # getter
       define_singleton_method("#{name}=") do |val|
-        instance_variable_set("@#{name}", val)
+        instance_variable_set("@#{name}", val)  
       end 
       # setter
       define_singleton_method("#{name}") do
@@ -30,16 +32,25 @@ class Epub
          @base_path = tab_path[0] + '/'
       end
       opf_file = zipfile.get_input_stream(opf_path)
-      @opf = Nokogiri::XML opf_file 
-      @opf.remove_namespaces! 
+      @opf = Nokogiri::XML opf_file
+      @opf.remove_namespaces!
+   end
+
+   def banned?(meta)    
+    BANNED_META.each do |ban|
+      if meta[0, ban.size] == ban
+        return true
+      end
+    end
+    return false
    end
 
    def get_metadata()      
     @opf.at_xpath("//metadata").children.each do |elem|
       #puts elem.inspect
       if elem.name != 'text'
-        if elem.name == "meta"
-          name_elem = elem['name'].tr(' ', '_').tr(':', '_')
+        if elem.name == "meta" && !banned?(elem['name'])
+          name_elem = elem['name'].tr(' ', '_').tr(':', '_').tr('.', '_')
           content_elem = elem['content']
         else
           name_elem = elem.name
