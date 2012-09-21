@@ -7,6 +7,6 @@ Gem::Specification.new do |spec|
   spec.name = 'ruby-epub'
   spec.version = '0.2.8'
   spec.files = ['README', 'lib/ruby-epub.rb']
-  spec.add_dependency('rubyzip2')
+  spec.add_dependency('rubyzip')
   spec.add_dependency('nokogiri')
 end  

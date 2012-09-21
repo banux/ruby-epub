@@ -66,10 +66,10 @@ class Epub
    end
  
    def cover_image
-     content, img_name = cover_by_cover_id
+     content, img_name = cover_by_meta_cover
      if !content
-       content, img_name = cover_by_meta_cover
-     elsif !content
+#       content, img_name = cover_by_cover_id
+#     elsif !content
        content, img_name = cover_image_by_html
      end
  
@@ -87,6 +87,7 @@ class Epub
    end
 
    def cover_image_by_html
+    puts "enter by html"
     cover_item = @opf.search("//package/guide/reference[@type='cover']")
     if cover_item && cover_item.first
       cover_url = cover_item.first['href']
@@ -107,6 +108,7 @@ class Epub
    end
 
    def cover_by_meta_cover
+    puts "enter meta cover"
     img_id = @opf.search("//meta[@name='cover']")
     if img_id && img_id.first
     img_item = @opf.search("//manifest/item[@id='"+ img_id.first['content'] + "']")
@@ -121,6 +123,7 @@ class Epub
    end
 
    def cover_by_cover_id
+    puts "by id"
     img_item = @opf.at_xpath("//manifest/item[@id='cover']")
     if img_item 
       img_url = @base_path + img_item['href']
