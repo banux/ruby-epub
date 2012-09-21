@@ -11,7 +11,8 @@ class Epub
       get_metadata()
    end
 
-  def my_metadata(name) 
+  def my_metadata(name)
+    begin
       # getter
       define_singleton_method("#{name}=") do |val|
         instance_variable_set("@#{name}", val)  
@@ -19,6 +20,8 @@ class Epub
       # setter
       define_singleton_method("#{name}") do
         instance_variable_get("@#{name}")
+      end
+      rescue
       end 
   end
 
